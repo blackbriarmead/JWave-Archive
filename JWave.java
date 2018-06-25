@@ -21,11 +21,25 @@ public class JWave{
    
    public JWave(File f){
       this.f = f;
+      try{
+         if(!this.f.exists()){
+            this.f.createNewFile();
+         }
+      }catch(IOException e){
+         System.out.println(e.toString());
+      }
       generateAttributes();
    }
    
    public JWave(String s){
       this.f = new File(s);
+      try{
+         if(!this.f.exists()){
+            this.f.createNewFile();
+         }
+      }catch(IOException e){
+         System.out.println(e.toString());
+      }
       generateAttributes();
    }
    
