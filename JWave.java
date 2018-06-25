@@ -77,6 +77,7 @@ public class JWave{
             out[i * (int)(BitsPerSample/8)] = (int)(readChar(datafis));
          }
       }
+      in = out;
    }
     
    public String listAttributes(){
