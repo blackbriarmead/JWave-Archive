@@ -18,6 +18,9 @@ public class JWave{
    short BitsPerSample;
    int Subchunk2ID;
    int Subchunk2Size;
+   FileInputStream datafis;
+   FileOutputStream datafos;
+   
    
    public JWave(File f){
       this.f = f;
@@ -25,6 +28,8 @@ public class JWave{
          if(!this.f.exists()){
             this.f.createNewFile();
          }
+         this.datafis = new FileInputStream(f);
+         this.datafos = new FileOutputStream(f);
       }catch(IOException e){
          System.out.println(e.toString());
       }
@@ -37,16 +42,43 @@ public class JWave{
          if(!this.f.exists()){
             this.f.createNewFile();
          }
+         this.datafis = new FileInputStream(f);
+         this.datafos = new FileOutputStream(f);
       }catch(IOException e){
          System.out.println(e.toString());
       }
       generateAttributes();
    }
    
-   public long getFileSize(){
-      return(f.length());
+   public void readSamples(int[] in, int totalSamples){
+      int[] out = new int[(int)(NumChannels*BitsPerSample/8)];
+      for(int i = 0; i < totalSamples; i++){
+         for(int j = 0; j < (int)(NumChannels*BitsPerSample/8); j++){
+            if(BitsPerSample == 16){
+               out[i * (int)(NumChannels*BitsPerSample/8) + j] = (int)(readShort(datafis, "little"));
+            }else if(BitsPerSample == 32){
+               out[i * (int)(NumChannels*BitsPerSample/8) + j] = readInt(datafis, "little");
+            }else if(BitsPerSample == 8){
+               out[i * (int)(NumChannels*BitsPerSample/8) + j] = (int)(readChar(datafis));
+            }
+         }
+      }
+      in = out;
    }
    
+   public void readFrames(int[] in, int totalFrames){
+      int[] out = new int[(int)(BitsPerSample/8)];
+      for(int i = 0; i < totalFrames; i++){
+         if(BitsPerSample == 16){
+            out[i * (int)(BitsPerSample/8)] = (int)(readShort(datafis, "little"));
+         }else if(BitsPerSample == 32){
+            out[i * (int)(BitsPerSample/8)] = readInt(datafis, "little");
+         }else if(BitsPerSample == 8){
+            out[i * (int)(BitsPerSample/8)] = (int)(readChar(datafis));
+         }
+      }
+   }
+    
    public String listAttributes(){
       return("ChunkID: "+ChunkID +"\n"+
       "ChunkSize: "+ChunkSize +"\n"+
@@ -122,6 +154,15 @@ public class JWave{
          System.out.println(e.toString());
       }
       return(-1);
+   }
+   
+   private char readChar(FileInputStream fis){
+      try{
+         return((char)(fis.read()));
+      }catch(IOException e){
+         System.out.println(e.toString());
+      }
+      return(0x00);
    }
    
    private int intFromByteArray(byte[] bytes, boolean bigEndian) {
