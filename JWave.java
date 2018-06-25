@@ -1,6 +1,6 @@
 import java.io.*;
 import java.nio.*;
-
+import java.math.BigInteger;
 
 public class JWave{
    File f;
@@ -30,6 +30,7 @@ public class JWave{
          }
          this.datafis = new FileInputStream(f);
          this.datafos = new FileOutputStream(f);
+         datafis.skip(44);
       }catch(IOException e){
          System.out.println(e.toString());
       }
@@ -39,15 +40,25 @@ public class JWave{
    public JWave(String s){
       this.f = new File(s);
       try{
-         if(!this.f.exists()){
+         /**if(!this.f.exists()){
             this.f.createNewFile();
-         }
+         }*/
          this.datafis = new FileInputStream(f);
          this.datafos = new FileOutputStream(f);
+         //datafis.skip(44);
       }catch(IOException e){
          System.out.println(e.toString());
       }
-      generateAttributes();
+      //generateAttributes();
+   }
+   
+   public void close(){
+      try{
+         datafis.close();
+         datafos.close();
+      }catch(IOException e){
+         System.out.println(e.toString());
+      }
    }
    
    public void readSamples(int[] in, int totalSamples){
@@ -80,7 +91,7 @@ public class JWave{
       in = out;
    }
     
-   public String listAttributes(){
+   public String getAttributes(){
       return("ChunkID: "+ChunkID +"\n"+
       "ChunkSize: "+ChunkSize +"\n"+
       "Format: "+Format +"\n"+
@@ -125,7 +136,7 @@ public class JWave{
    
    private int readInt(FileInputStream fis, String endian){
       try{
-         if(endian.compareTo("big")==0){
+         if(endian.equals("big")){
             byte[] b = new byte[4];
             fis.read(b);
             return(intFromByteArray(b, true));
@@ -142,7 +153,7 @@ public class JWave{
    
    private short readShort(FileInputStream fis, String endian){
       try{
-         if(endian.compareTo("big")==0){
+         if(endian.equals("big")){
             byte[] b = new byte[2];
             fis.read(b);
             return(shortFromByteArray(b, true));
@@ -168,17 +179,17 @@ public class JWave{
    
    private int intFromByteArray(byte[] bytes, boolean bigEndian) {
       if(bigEndian){
-         return(ByteBuffer.wrap(bytes).getInt());
+         return(new BigInteger(bytes).intValue());
       }else{
-         return(ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).getInt());
+         return(new BigInteger(1,bytes).intValue());
       }
    }
    
    private short shortFromByteArray(byte[] bytes, boolean bigEndian) {
       if(bigEndian){
-         return(ByteBuffer.wrap(bytes).getShort());
+         return((short)(new BigInteger(bytes).intValue()));
       }else{
-         return(ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).getShort());
+         return((short)(new BigInteger(1,bytes).intValue()));
       }
    }
    
