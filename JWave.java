@@ -5,19 +5,19 @@ import java.nio.*;
 public class JWave{
    File f;
    
-   int ChunkID;
-   int ChunkSize;
-   int Format;
-   int Subchunk1ID;
-   int Subchunk1Size;
-   short AudioFormat;
-   short NumChannels;
-   int SampleRate;
-   int ByteRate;
-   short BlockAlign;
-   short BitsPerSample;
-   int Subchunk2ID;
-   int Subchunk2Size;
+   public int ChunkID;
+   public int ChunkSize;
+   public int Format;
+   public int Subchunk1ID;
+   public int Subchunk1Size;
+   public short AudioFormat;
+   public short NumChannels;
+   public int SampleRate;
+   public int ByteRate;
+   public short BlockAlign;
+   public short BitsPerSample;
+   public int Subchunk2ID;
+   public int Subchunk2Size;
    FileInputStream datafis;
    FileOutputStream datafos;
    
