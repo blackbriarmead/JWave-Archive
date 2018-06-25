@@ -47,6 +47,22 @@ public class JWave{
       return(f.length());
    }
    
+   public String listAttributes(){
+      return("ChunkID: "+ChunkID +"\n"+
+      "ChunkSize: "+ChunkSize +"\n"+
+      "Format: "+Format +"\n"+
+      "Subchunk1ID: "+Subchunk1ID +"\n"+
+      "Subchunk1Size: "+Subchunk1Size +"\n"+
+      "AudioFormat: "+AudioFormat +"\n"+
+      "NumChannels: "+NumChannels +"\n"+
+      "SampleRate: "+SampleRate +"\n"+
+      "ByteRate: "+ByteRate +"\n"+
+      "BlockAlign: "+BlockAlign +"\n"+
+      "BitsPerSample: "+BitsPerSample +"\n"+
+      "Subchunk2ID: "+Subchunk2ID +"\n"+
+      "Subchunk2Size: "+Subchunk2Size);
+   }
+   
    private void generateAttributes(){
       try{
          FileInputStream fis = new FileInputStream(f);// open new fis object
@@ -124,11 +140,62 @@ public class JWave{
       }
    }
    
-   private void updateAttributes(){
-      
+   private void writeAttributes(){
+      try{
+         FileOutputStream fos = new FileOutputStream(f);// open new fos object
+         
+         //convert to bytes (with correct endianess) and write sequentially
+         fos.write(intToBigEndian(ChunkID));
+         fos.write(intToLittleEndian(ChunkSize));
+         fos.write(intToBigEndian(Format));
+         fos.write(intToBigEndian(Subchunk1ID));
+         fos.write(intToLittleEndian(Subchunk1Size));
+         fos.write(shortToLittleEndian(AudioFormat));
+         fos.write(shortToLittleEndian(NumChannels));
+         fos.write(intToLittleEndian(SampleRate));
+         fos.write(intToLittleEndian(ByteRate));
+         fos.write(shortToLittleEndian(BlockAlign));
+         fos.write(shortToLittleEndian(BitsPerSample));
+         fos.write(intToBigEndian(Subchunk2ID));
+         fos.write(intToLittleEndian(Subchunk2Size));
+         
+         fos.close(); // close fos
+      }
+      catch(IOException e){
+         System.out.println(e.toString());
+      }
    }
    
-   public int getChunkID(){
-      return(ChunkID);
+   private static byte[] intToLittleEndian(int num) {
+   	byte[] b = new byte[4];
+   	b[0] = (byte) (num & 0xFF);
+   	b[1] = (byte) ((num >> 8) & 0xFF);
+   	b[2] = (byte) ((num >> 16) & 0xFF);
+   	b[3] = (byte) ((num >> 24) & 0xFF);
+   	return b;
    }
+   
+   private static byte[] intToBigEndian(int num) {
+   	byte[] b = new byte[4];
+   	b[0] = (byte) ((num >> 24) & 0xFF);
+   	b[1] = (byte) ((num >> 16) & 0xFF);
+   	b[2] = (byte) ((num >> 8) & 0xFF);
+   	b[3] = (byte) (num & 0xFF);
+   	return b;
+   }
+   
+   private static byte[] shortToLittleEndian(short num) {
+   	byte[] b = new byte[2];
+   	b[0] = (byte) (num & 0xFF);
+   	b[1] = (byte) ((num >> 8) & 0xFF);
+   	return b;
+   }
+   
+   private static byte[] shortToBigEndian(short num) {
+   	byte[] b = new byte[2];
+   	b[0] = (byte) ((num >> 8) & 0xFF);
+   	b[1] = (byte) (num & 0xFF);
+   	return b;
+   }
+
 }
