@@ -1,6 +1,5 @@
 import java.io.*;
 import java.nio.*;
-import java.math.BigInteger;
 
 public class JWave{
    File f;
@@ -78,47 +77,138 @@ public class JWave{
       "Subchunk2Size: "+Subchunk2Size);
    }
    
-   private void loadAttributes(FileInputStream fis){
+   private void loadAttributes(){
       //read raw bytes and convert to ints and shorts
-      ChunkID = readInt(fis, "big");
-      ChunkSize = readInt(fis, "little");
-      Format = readInt(fis, "big");
-      Subchunk1ID = readInt(fis, "big");
-      Subchunk1Size = readInt(fis, "little");
-      AudioFormat = readShort(fis, "little");
-      NumChannels = readShort(fis, "little");
-      SampleRate = readInt(fis, "little");
-      ByteRate = readInt(fis, "little");
-      BlockAlign = readShort(fis, "little");
-      BitsPerSample = readShort(fis, "little");
-      Subchunk2ID = readInt(fis, "big");
-      Subchunk2Size = readInt(fis, "little");
+      try{
+         FileInputStream fis = new FileInputStream(f);
+         ChunkID = readInt(fis, "big");
+         ChunkSize = readInt(fis, "little");
+         Format = readInt(fis, "big");
+         Subchunk1ID = readInt(fis, "big");
+         Subchunk1Size = readInt(fis, "little");
+         AudioFormat = readShort(fis, "little");
+         NumChannels = readShort(fis, "little");
+         SampleRate = readInt(fis, "little");
+         ByteRate = readInt(fis, "little");
+         BlockAlign = readShort(fis, "little");
+         BitsPerSample = readShort(fis, "little");
+         Subchunk2ID = readInt(fis, "big");
+         Subchunk2Size = readInt(fis, "little");
+         fis.close();
+      } catch(Exception e){
+         e.printStackTrace();
+      }
       
    }
    
-   private void loadData(FileInputStream fis){
+   private void writeAttributes(FileOutputStream fos){
       try{
          
-         //read raw bytes and convert to ints and shorts
-         int available = fis.available();
-         data = new byte[available];
-         fis.read(data);
-         
+         //convert to bytes (with correct endianess) and write sequentially
+         fos.write(intToBigEndian(ChunkID));
+         fos.write(intToLittleEndian(ChunkSize));
+         fos.write(intToBigEndian(Format));
+         fos.write(intToBigEndian(Subchunk1ID));
+         fos.write(intToLittleEndian(Subchunk1Size));
+         fos.write(shortToLittleEndian(AudioFormat));
+         fos.write(shortToLittleEndian(NumChannels));
+         fos.write(intToLittleEndian(SampleRate));
+         fos.write(intToLittleEndian(ByteRate));
+         fos.write(shortToLittleEndian(BlockAlign));
+         fos.write(shortToLittleEndian(BitsPerSample));
+         fos.write(intToBigEndian(Subchunk2ID));
+         fos.write(intToLittleEndian(Subchunk2Size));
       }
       catch(IOException e){
          System.out.println(e.toString());
       }
+   }
+   
+   public byte[] getData(){
+      loadData();
+      return(data);
+   }
+   
+   private void loadData(){
+      try{
+         FileInputStream fis = new FileInputStream(f);
+         //read raw bytes and convert to ints and shorts
+         fis.skip(44);
+         int available = fis.available();
+         data = new byte[available];
+         fis.read(data);
+         fis.close();
+         
+      }
+      catch(Exception e){
+         e.printStackTrace();
+      }
       
    }
    
-   private void loadAllData(){
+   private void writeData(FileOutputStream fos){
       try{
-         FileInputStream fis = new FileInputStream(f);
-         loadAttributes(fis);
-         loadData(fis);
-         fis.close();
+         fos.write(data);
+      }
+      catch(IOException e){
+         System.out.println(e.toString());
+      }
+   }
+   
+   private void loadAllData(){
+      loadAttributes();
+      loadData();
+   }
+   
+   public void writeAllData(){
+      try{
+         FileOutputStream fos = new FileOutputStream(f);
+         writeAttributes(fos);
+         writeData(fos);
+         fos.close();
       }catch(Exception e){
          e.printStackTrace();
+      }
+   }
+   
+   public void changeSpeed(double multiplier){
+      try{
+         int newSamples = (int)(Subchunk2Size / multiplier / (BitsPerSample/8)/ NumChannels);
+         double sampleNum = 0;
+         int roundedSampleNum = 0;
+         byte[] buffer = new byte[BitsPerSample/8*NumChannels];
+         
+         ByteArrayOutputStream baos = new ByteArrayOutputStream(BitsPerSample / 8 * NumChannels);
+         ByteArrayInputStream bais = new ByteArrayInputStream(data);
+         
+         
+         while(sampleNum < newSamples){
+            int difference = (int)(Math.floor(sampleNum - roundedSampleNum));
+            if(difference >= 2){
+               roundedSampleNum += Math.floor(difference);
+               bais.skip((difference-1)*BitsPerSample/8*NumChannels);
+               bais.read(buffer);
+            }else if(difference >=1){
+               roundedSampleNum += Math.floor(difference);
+               bais.read(buffer);
+            }
+            baos.write(buffer);
+            sampleNum += multiplier;
+         }
+         
+         data = baos.toByteArray();
+         
+         Subchunk2Size = data.length;
+      }catch(Exception e){
+         e.printStackTrace();
+      }
+   }
+   
+   
+   
+   private void putByteArray(byte[] parent, byte[] child, int index){
+      for(int i = index; i < index + child.length; i++){
+         parent[i] = child[i-index];
       }
    }
    
@@ -186,29 +276,6 @@ public class JWave{
       }else{
          return   (short)(b[0] & 0xFF |
             (b[1] & 0xFF) << 8);
-      }
-   }
-   
-   private void writeAttributes(FileOutputStream fos){
-      try{
-         
-         //convert to bytes (with correct endianess) and write sequentially
-         fos.write(intToBigEndian(ChunkID));
-         fos.write(intToLittleEndian(ChunkSize));
-         fos.write(intToBigEndian(Format));
-         fos.write(intToBigEndian(Subchunk1ID));
-         fos.write(intToLittleEndian(Subchunk1Size));
-         fos.write(shortToLittleEndian(AudioFormat));
-         fos.write(shortToLittleEndian(NumChannels));
-         fos.write(intToLittleEndian(SampleRate));
-         fos.write(intToLittleEndian(ByteRate));
-         fos.write(shortToLittleEndian(BlockAlign));
-         fos.write(shortToLittleEndian(BitsPerSample));
-         fos.write(intToBigEndian(Subchunk2ID));
-         fos.write(intToLittleEndian(Subchunk2Size));
-      }
-      catch(IOException e){
-         System.out.println(e.toString());
       }
    }
    
