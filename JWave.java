@@ -18,50 +18,21 @@ public class JWave{
    public short BitsPerSample;
    public int Subchunk2ID;
    public int Subchunk2Size;
-   FileInputStream datafis;
-   FileOutputStream datafos;
+   
+   byte[] data;
    
    
    public JWave(File f){
       this.f = f;
-      try{
-         if(!this.f.exists()){
-            this.f.createNewFile();
-         }
-         this.datafis = new FileInputStream(f);
-         this.datafos = new FileOutputStream(f);
-         datafis.skip(44);
-      }catch(IOException e){
-         System.out.println(e.toString());
-      }
-      generateAttributes();
+      getAllData();
    }
    
    public JWave(String s){
       this.f = new File(s);
-      try{
-         /**if(!this.f.exists()){
-            this.f.createNewFile();
-         }*/
-         this.datafis = new FileInputStream(f);
-         this.datafos = new FileOutputStream(f);
-         //datafis.skip(44);
-      }catch(IOException e){
-         System.out.println(e.toString());
-      }
-      //generateAttributes();
+      getAllData();
    }
    
-   public void close(){
-      try{
-         datafis.close();
-         datafos.close();
-      }catch(IOException e){
-         System.out.println(e.toString());
-      }
-   }
-   
-   public void readSamples(int[] in, int totalSamples){
+   /**public void readSamples(int[] in, int totalSamples){
       int[] out = new int[(int)(NumChannels*BitsPerSample/8)];
       for(int i = 0; i < totalSamples; i++){
          for(int j = 0; j < (int)(NumChannels*BitsPerSample/8); j++){
@@ -89,7 +60,7 @@ public class JWave{
          }
       }
       in = out;
-   }
+   }*/
     
    public String getAttributes(){
       return("ChunkID: "+ChunkID +"\n"+
@@ -107,31 +78,48 @@ public class JWave{
       "Subchunk2Size: "+Subchunk2Size);
    }
    
-   private void generateAttributes(){
+   private void getAttributes(FileInputStream fis){
+      //read raw bytes and convert to ints and shorts
+      ChunkID = readInt(fis, "big");
+      ChunkSize = readInt(fis, "little");
+      Format = readInt(fis, "big");
+      Subchunk1ID = readInt(fis, "big");
+      Subchunk1Size = readInt(fis, "little");
+      AudioFormat = readShort(fis, "little");
+      NumChannels = readShort(fis, "little");
+      SampleRate = readInt(fis, "little");
+      ByteRate = readInt(fis, "little");
+      BlockAlign = readShort(fis, "little");
+      BitsPerSample = readShort(fis, "little");
+      Subchunk2ID = readInt(fis, "big");
+      Subchunk2Size = readInt(fis, "little");
+      
+   }
+   
+   private void getData(FileInputStream fis){
       try{
-         FileInputStream fis = new FileInputStream(f);// open new fis object
          
          //read raw bytes and convert to ints and shorts
-         ChunkID = readInt(fis, "big");
-         ChunkSize = readInt(fis, "little");
-         Format = readInt(fis, "big");
-         Subchunk1ID = readInt(fis, "big");
-         Subchunk1Size = readInt(fis, "little");
-         AudioFormat = readShort(fis, "little");
-         NumChannels = readShort(fis, "little");
-         SampleRate = readInt(fis, "little");
-         ByteRate = readInt(fis, "little");
-         BlockAlign = readShort(fis, "little");
-         BitsPerSample = readShort(fis, "little");
-         Subchunk2ID = readInt(fis, "big");
-         Subchunk2Size = readInt(fis, "little");
+         int available = fis.available();
+         data = new byte[available];
+         fis.read(data);
          
-         fis.close(); // close fis
       }
       catch(IOException e){
          System.out.println(e.toString());
       }
       
+   }
+   
+   private void getAllData(){
+      try{
+         FileInputStream fis = new FileInputStream(f);
+         getAttributes(fis);
+         getData(fis);
+         fis.close();
+      }catch(Exception e){
+         e.printStackTrace();
+      }
    }
    
    private int readInt(FileInputStream fis, String endian){
@@ -193,9 +181,8 @@ public class JWave{
       }
    }
    
-   private void writeAttributes(){
+   private void writeAttributes(FileOutputStream fos){
       try{
-         FileOutputStream fos = new FileOutputStream(f);// open new fos object
          
          //convert to bytes (with correct endianess) and write sequentially
          fos.write(intToBigEndian(ChunkID));
@@ -211,8 +198,6 @@ public class JWave{
          fos.write(shortToLittleEndian(BitsPerSample));
          fos.write(intToBigEndian(Subchunk2ID));
          fos.write(intToLittleEndian(Subchunk2Size));
-         
-         fos.close(); // close fos
       }
       catch(IOException e){
          System.out.println(e.toString());
