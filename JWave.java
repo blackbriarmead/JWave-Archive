@@ -196,9 +196,11 @@ public class JWave{
             sampleNum += multiplier;
          }
          
-         data = baos.toByteArray();
-         
-         Subchunk2Size = data.length/2;
+         byte[] temp = baos.toByteArray();
+         data = new byte[temp.length/2];
+         baos.close();
+         java.lang.System.arraycopy(temp,0,data,0,temp.length/2);
+         Subchunk2Size = data.length;
       }catch(Exception e){
          e.printStackTrace();
       }
