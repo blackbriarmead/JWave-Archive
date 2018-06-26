@@ -165,19 +165,27 @@ public class JWave{
       return(0x00);
    }
    
-   private int intFromByteArray(byte[] bytes, boolean bigEndian) {
+   private int intFromByteArray(byte[] b, boolean bigEndian) {
       if(bigEndian){
-         return(new BigInteger(bytes).intValue());
+         return   b[3] & 0xFF |
+            (b[2] & 0xFF) << 8 |
+            (b[1] & 0xFF) << 16 |
+            (b[0] & 0xFF) << 24;
       }else{
-         return(new BigInteger(1,bytes).intValue());
+         return   b[0] & 0xFF |
+            (b[1] & 0xFF) << 8 |
+            (b[2] & 0xFF) << 16 |
+            (b[3] & 0xFF) << 24;
       }
    }
    
-   private short shortFromByteArray(byte[] bytes, boolean bigEndian) {
+   private short shortFromByteArray(byte[] b, boolean bigEndian) {
       if(bigEndian){
-         return((short)(new BigInteger(bytes).intValue()));
+         return   (short)(b[1] & 0xFF |
+            (b[0] & 0xFF) << 8);
       }else{
-         return((short)(new BigInteger(1,bytes).intValue()));
+         return   (short)(b[0] & 0xFF |
+            (b[1] & 0xFF) << 8);
       }
    }
    
