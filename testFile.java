@@ -5,7 +5,7 @@ public class testFile{
       JWave j = new JWave("aa.wav");
       System.out.println(j.getAttributes());
       byte[] data = j.getData();
-      j.changeSpeed(0.5);
+      j.changeSpeed(2);
       j.writeAllData();
    }
 }

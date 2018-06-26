@@ -173,7 +173,7 @@ public class JWave{
    
    public void changeSpeed(double multiplier){
       try{
-         int newSamples = (int)(Subchunk2Size / multiplier / (BitsPerSample/8)/ NumChannels);
+         int newSamples = (int)(Subchunk2Size / multiplier / (BitsPerSample/8)* NumChannels);
          double sampleNum = 0;
          int roundedSampleNum = 0;
          byte[] buffer = new byte[BitsPerSample/8*NumChannels];
@@ -198,7 +198,7 @@ public class JWave{
          
          data = baos.toByteArray();
          
-         Subchunk2Size = data.length;
+         Subchunk2Size = data.length/2;
       }catch(Exception e){
          e.printStackTrace();
       }
