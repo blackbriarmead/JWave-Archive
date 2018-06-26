@@ -24,12 +24,12 @@ public class JWave{
    
    public JWave(File f){
       this.f = f;
-      getAllData();
+      loadAllData();
    }
    
    public JWave(String s){
       this.f = new File(s);
-      getAllData();
+      loadAllData();
    }
    
    /**public void readSamples(int[] in, int totalSamples){
@@ -78,7 +78,7 @@ public class JWave{
       "Subchunk2Size: "+Subchunk2Size);
    }
    
-   private void getAttributes(FileInputStream fis){
+   private void loadAttributes(FileInputStream fis){
       //read raw bytes and convert to ints and shorts
       ChunkID = readInt(fis, "big");
       ChunkSize = readInt(fis, "little");
@@ -96,7 +96,7 @@ public class JWave{
       
    }
    
-   private void getData(FileInputStream fis){
+   private void loadData(FileInputStream fis){
       try{
          
          //read raw bytes and convert to ints and shorts
@@ -111,11 +111,11 @@ public class JWave{
       
    }
    
-   private void getAllData(){
+   private void loadAllData(){
       try{
          FileInputStream fis = new FileInputStream(f);
-         getAttributes(fis);
-         getData(fis);
+         loadAttributes(fis);
+         loadData(fis);
          fis.close();
       }catch(Exception e){
          e.printStackTrace();
