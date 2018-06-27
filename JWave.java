@@ -182,14 +182,14 @@ public class JWave{
          ByteArrayInputStream bais = new ByteArrayInputStream(data);
          
          
-         while(sampleNum < newSamples){
+         while(sampleNum < newSamples && bais.available() > 0){
             int difference = (int)(Math.floor(sampleNum - roundedSampleNum));
             if(difference >= 2){
-               roundedSampleNum += Math.floor(difference);
+               roundedSampleNum = (int)Math.floor(sampleNum);
                bais.skip((difference-1)*BitsPerSample/8*NumChannels);
                bais.read(buffer);
-            }else if(difference >=1){
-               roundedSampleNum += Math.floor(difference);
+            }else if(difference ==1){
+               roundedSampleNum =(int)Math.floor(sampleNum);
                bais.read(buffer);
             }
             baos.write(buffer);
@@ -197,9 +197,9 @@ public class JWave{
          }
          
          byte[] temp = baos.toByteArray();
-         data = new byte[temp.length/2];
+         data = new byte[(int)(temp.length)];
          baos.close();
-         java.lang.System.arraycopy(temp,0,data,0,temp.length/2);
+         java.lang.System.arraycopy(temp,0,data,0,(int)(temp.length));
          Subchunk2Size = data.length;
       }catch(Exception e){
          e.printStackTrace();
