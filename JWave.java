@@ -171,27 +171,96 @@ public class JWave{
       }
    }
    
+   public void normalize(){
+      try{
+         int totalSamples = Subchunk2Size / BitsPerSample * 8;
+         int sampleNum = 0;      
+         byte[] buffer = new byte[BitsPerSample / 8];
+         short largest = 0;
+         
+         ByteArrayInputStream bais = new ByteArrayInputStream(data);
+         while(sampleNum < totalSamples && bais.available() > 0){
+            bais.read(buffer);
+            short temp = shortFromByteArray(buffer, false);
+            if(temp<0){
+               temp = (short)(0 - temp);
+            }
+            if(temp > largest){
+               largest = temp;
+            }
+            sampleNum++;
+         }
+         
+         double mult = (double)Short.MAX_VALUE /(double)largest;
+         if(mult<1){
+            amplify(mult);
+         }
+         
+      }catch(Exception e){
+         e.printStackTrace();
+      }
+   }
+   
+   public void amplify(double multiplier){
+      try{
+         int totalSamples = Subchunk2Size / BitsPerSample * 8;
+         int sampleNum = 0;      
+         byte[] buffer = new byte[BitsPerSample / 8];
+         ByteBuffer bbuffer = ByteBuffer.allocate(BitsPerSample / 8);
+         
+         ByteArrayInputStream bais = new ByteArrayInputStream(data);
+         ByteArrayOutputStream baos = new ByteArrayOutputStream(BitsPerSample / 8);
+         while(sampleNum < totalSamples && bais.available() > 0){
+            bais.read(buffer);
+            bbuffer.wrap(buffer);
+            bbuffer.position(0);
+            double intermediate = bbuffer.getShort();
+            intermediate *= multiplier;
+            if(intermediate > Short.MAX_VALUE){
+               intermediate = Short.MAX_VALUE;
+            }else if(intermediate < Short.MIN_VALUE){
+               intermediate = Short.MIN_VALUE;
+            }
+            bbuffer.position(0);
+            bbuffer.putShort((short)intermediate);
+            baos.write(bbuffer.array());
+            sampleNum++;
+         }
+         data = baos.toByteArray();
+         
+         
+      }catch(Exception e){
+         e.printStackTrace();
+      }
+   }
+   
    public void changeSpeed(double multiplier){
       try{
          int newSamples = (int)(Subchunk2Size / multiplier / (BitsPerSample/8)* NumChannels);
          double sampleNum = 0;
          int roundedSampleNum = 0;
          byte[] buffer = new byte[BitsPerSample/8*NumChannels];
+         byte[] last = new byte[BitsPerSample/8*NumChannels];
          
          ByteArrayOutputStream baos = new ByteArrayOutputStream(BitsPerSample / 8 * NumChannels);
          ByteArrayInputStream bais = new ByteArrayInputStream(data);
          
          
          while(sampleNum < newSamples && bais.available() > 0){
-            int difference = (int)(Math.floor(sampleNum - roundedSampleNum));
+            double exactDifference = sampleNum - roundedSampleNum;
+            int difference = (int)(Math.floor(exactDifference));
             if(difference >= 2){
                roundedSampleNum = (int)Math.floor(sampleNum);
+               exactDifference -= difference;
                bais.skip((difference-1)*BitsPerSample/8*NumChannels);
                bais.read(buffer);
             }else if(difference ==1){
                roundedSampleNum =(int)Math.floor(sampleNum);
+               exactDifference -= difference;
                bais.read(buffer);
-            }
+            }/**if(exactDifference > 0 && exactDifference < 1){
+               buffer = 
+            }*/
             baos.write(buffer);
             sampleNum += multiplier;
          }
