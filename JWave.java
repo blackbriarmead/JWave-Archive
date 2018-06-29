@@ -212,18 +212,14 @@ public class JWave{
          ByteArrayOutputStream baos = new ByteArrayOutputStream(BitsPerSample / 8);
          while(sampleNum < totalSamples && bais.available() > 0){
             bais.read(buffer);
-            bbuffer.wrap(buffer);
-            bbuffer.position(0);
-            double intermediate = bbuffer.getShort();
+            short intermediate = shortFromByteArray(buffer, false);
             intermediate *= multiplier;
             if(intermediate > Short.MAX_VALUE){
                intermediate = Short.MAX_VALUE;
             }else if(intermediate < Short.MIN_VALUE){
                intermediate = Short.MIN_VALUE;
             }
-            bbuffer.position(0);
-            bbuffer.putShort((short)intermediate);
-            baos.write(bbuffer.array());
+            baos.write(shortToLittleEndian(intermediate));
             sampleNum++;
          }
          data = baos.toByteArray();
