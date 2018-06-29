@@ -8,7 +8,12 @@ public class testFile{
       System.out.println("Retrieving Header Attributes\n\n");
       System.out.println(j.getAttributes());
       System.out.println("\n\n\nChanging speed");
+      j.changeSpeed(2);
+      j.changeSpeed(0.5);
+      j.amplify(0.5);
+      System.out.println(j.getMaxAmplitude());
       j.normalize();
+      System.out.println(j.getMaxAmplitude());
       System.out.println("Saving new wav");
       j.writeAllData();
       System.out.println("Retrieving new Header Attributes\n\n");

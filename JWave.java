@@ -31,36 +31,6 @@ public class JWave{
       loadAllData();
    }
    
-   /**public void readSamples(int[] in, int totalSamples){
-      int[] out = new int[(int)(NumChannels*BitsPerSample/8)];
-      for(int i = 0; i < totalSamples; i++){
-         for(int j = 0; j < (int)(NumChannels*BitsPerSample/8); j++){
-            if(BitsPerSample == 16){
-               out[i * (int)(NumChannels*BitsPerSample/8) + j] = (int)(readShort(datafis, "little"));
-            }else if(BitsPerSample == 32){
-               out[i * (int)(NumChannels*BitsPerSample/8) + j] = readInt(datafis, "little");
-            }else if(BitsPerSample == 8){
-               out[i * (int)(NumChannels*BitsPerSample/8) + j] = (int)(readChar(datafis));
-            }
-         }
-      }
-      in = out;
-   }
-   
-   public void readFrames(int[] in, int totalFrames){
-      int[] out = new int[(int)(BitsPerSample/8)];
-      for(int i = 0; i < totalFrames; i++){
-         if(BitsPerSample == 16){
-            out[i * (int)(BitsPerSample/8)] = (int)(readShort(datafis, "little"));
-         }else if(BitsPerSample == 32){
-            out[i * (int)(BitsPerSample/8)] = readInt(datafis, "little");
-         }else if(BitsPerSample == 8){
-            out[i * (int)(BitsPerSample/8)] = (int)(readChar(datafis));
-         }
-      }
-      in = out;
-   }*/
-    
    public String getAttributes(){
       return("ChunkID: "+ChunkID +"\n"+
       "ChunkSize: "+ChunkSize +"\n"+
@@ -160,6 +130,17 @@ public class JWave{
       loadData();
    }
    
+   public void writeAllData(File file){
+      try{
+         FileOutputStream fos = new FileOutputStream(file);
+         writeAttributes(fos);
+         writeData(fos);
+         fos.close();
+      }catch(Exception e){
+         e.printStackTrace();
+      }
+   }
+   
    public void writeAllData(){
       try{
          FileOutputStream fos = new FileOutputStream(f);
@@ -171,7 +152,7 @@ public class JWave{
       }
    }
    
-   public void normalize(){
+   public short getMaxAmplitude(){
       try{
          int totalSamples = Subchunk2Size / BitsPerSample * 8;
          int sampleNum = 0;      
@@ -190,9 +171,19 @@ public class JWave{
             }
             sampleNum++;
          }
+         return(largest);
+      }catch(Exception e){
+         e.printStackTrace();
+         return(0);
+      }
+   }
+   
+   public void normalize(){
+      try{
+         short largest = getMaxAmplitude();
          
          double mult = (double)Short.MAX_VALUE /(double)largest;
-         if(mult<1){
+         if(mult>1){
             amplify(mult);
          }
          
@@ -271,6 +262,15 @@ public class JWave{
       }
    }
    
+   public void combine(JWave other){
+      if(other.Subchunk2Size <= Subchunk2Size){
+         ByteArrayOutputStream baos = new ByteArrayOutputStream(BitsPerSample / 8);
+         short amp1 = getMaxAmplitude();
+         short amp2 = other.getMaxAmplitude();
+         int totalAmp = amp1 + amp2;
+         double newMult = (double)Short.MAX_VALUE / (double)totalAmp;
+      }
+   }
    
    
    private void putByteArray(byte[] parent, byte[] child, int index){
